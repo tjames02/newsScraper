@@ -8,6 +8,7 @@ var mongoose = require("mongoose");
 var axios = require("axios");
 var cheerio = require("cheerio");
 
+
 // Require all models
 var db = require("./models");
 
@@ -34,22 +35,40 @@ mongoose.connect("mongodb://localhost/hwScraper", { useNewUrlParser: true });
 // A GET route for scraping the echoJS website
 app.get("/scrape", function(req, res) {
   // First, we grab the body of the html with axios
-  axios.get("http://www.mnb.uscourts.gov/judges-info/opinions").then(function(response) {
+  
+
+
+
+
+
+
+
+  axios.get("http://ecf.ca8.uscourts.gov/rss/ca8opns_rss.xml").then(function(response) {
     // Then, we load that into cheerio and save it to $ for a shorthand selector
-    var $ = cheerio.load(response.data);
+    var $ = cheerio.load(response.data, 
+        {
+        withDomLvl1: true,
+        normalizeWhitespace: false,
+        xmlMode: true,
+        decodeEntities: true
+        }
+      );
 
     // Now, we grab every h2 within an article tag, and do the following:
-    $("li span").each(function(i, element) {
+    $("item").each(function(i, element) {
       // Save an empty result object
       var result = {};
-
+      console.log (result);
       // Add the text and href of every link, and save them as properties of the result object
       result.title = $(this)
-        .children("a")
+        .children("title")
         .text();
       result.link = $(this)
-        .children("a")
-        .attr("href");
+        .children("link")
+        .text();
+      result.description = $(this)
+        .children("description")
+        .text();
 
       // Create a new Article using the `result` object built from scraping
       db.Article.create(result)
